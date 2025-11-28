@@ -11,11 +11,14 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PublicEventController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
+// Public routes (including Midtrans callback)
+Route::post('/midtrans/callback', [TransactionController::class, 'notificationHandler']);
+
 Route::get('/', [FrontController::class, 'index'])->name('home');
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
 Route::get('/events/{slug}', [PublicEventController::class, 'show'])->name('events.show');
@@ -70,5 +73,10 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('events', EventController::class)->only(['index', 'show']);
         Route::resource('certificates', CertificateController::class)->only(['index', 'show']);
         Route::resource('registrations', RegistrationController::class);
+
+        // Transaction routes for users
+        Route::get('/transactions/{event}/create', [TransactionController::class, 'create'])->name('transactions.create');
+        Route::post('/transactions/{event}', [TransactionController::class, 'store'])->name('transactions.store');
+        Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
     });
 });

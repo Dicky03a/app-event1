@@ -45,11 +45,13 @@ class EventController extends Controller
             'event_date' => 'required|date',
             'event_time' => 'required',
             'location' => 'required|string|max:255',
+            'is_free' => 'required|boolean',
+            'price' => 'required_if:is_free,false|nullable|integer|min:0',
         ]);
 
         $user = auth()->user();
 
-        Event::create([
+        $event = Event::create([
             'organization_id' => $user->organization_id,
             'created_by' => $user->id,
             'title' => $request->title,
@@ -58,6 +60,8 @@ class EventController extends Controller
             'event_date' => $request->event_date,
             'event_time' => $request->event_time,
             'location' => $request->location,
+            'is_free' => $request->is_free,
+            'price' => $request->is_free ? null : $request->price,
             'status' => 'pending',
         ]);
 
@@ -108,6 +112,8 @@ class EventController extends Controller
             'event_date' => 'required|date',
             'event_time' => 'required',
             'location' => 'required|string|max:255',
+            'is_free' => 'required|boolean',
+            'price' => 'required_if:is_free,false|nullable|integer|min:0',
         ]);
 
         $event->update([
@@ -117,6 +123,8 @@ class EventController extends Controller
             'event_date' => $request->event_date,
             'event_time' => $request->event_time,
             'location' => $request->location,
+            'is_free' => $request->is_free,
+            'price' => $request->is_free ? null : $request->price,
             // If rejected, maybe reset to pending? User request didn't specify, but usually yes.
             // For now, let's keep status as is or reset to pending if it was rejected.
             'status' => $event->status === 'rejected' ? 'pending' : $event->status,

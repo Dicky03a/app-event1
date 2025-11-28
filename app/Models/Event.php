@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
@@ -23,12 +24,15 @@ class Event extends Model
         'approved_by',
         'approved_at',
         'rejection_reason',
+        'is_free',
+        'price',
     ];
 
     protected $casts = [
         'event_date' => 'date',
         'event_time' => 'string', // Store as string since TIME field in DB
         'approved_at' => 'datetime',
+        'is_free' => 'boolean',
     ];
 
     /**
@@ -65,6 +69,14 @@ class Event extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the related transactions for this event.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(\App\Models\Transaction::class);
     }
 
     /**

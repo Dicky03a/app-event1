@@ -39,6 +39,8 @@ class EventLifecycleTest extends TestCase
                 'event_date' => '2025-01-01',
                 'event_time' => '10:00',
                 'location' => 'Venue',
+                'is_free' => true,  // default to free event
+                'price' => null,    // price is null for free event
             ]);
 
         $response->assertRedirect(route('admin.events.index'));
@@ -68,6 +70,8 @@ class EventLifecycleTest extends TestCase
             'event_date' => '2025-01-01',
             'event_time' => '10:00',
             'location' => 'Venue',
+            'is_free' => true,
+            'price' => null,
             'status' => 'pending',
         ]);
 
@@ -108,6 +112,8 @@ class EventLifecycleTest extends TestCase
             'event_date' => '2025-01-01',
             'event_time' => '10:00',
             'location' => 'Venue',
+            'is_free' => true,
+            'price' => null,
             'status' => 'published',
         ]);
 

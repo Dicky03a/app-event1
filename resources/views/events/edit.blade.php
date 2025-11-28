@@ -93,12 +93,67 @@
                         @enderror
                     </div>
 
+                    <div class="mb-4.5 flex flex-col gap-4">
+                        <!-- Is Free Checkbox -->
+                        <label class="flex items-center cursor-pointer">
+                            <input type="hidden" name="is_free" value="{{$event->is_free ? '1' : '0'}}" id="is_free_hidden">
+                            <input type="checkbox" id="is_free_checkbox" class="sr-only" {{$event->is_free ? 'checked' : ''}}>
+                            <div class="relative w-10 h-6 bg-gray-300 rounded-full shadow-inner">
+                                <div class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transform transition-transform duration-300 ease-in-out"></div>
+                            </div>
+                            <span class="ml-3 text-black dark:text-white">Event Gratis</span>
+                        </label>
+
+                        <!-- Price Input -->
+                        <div id="price_section" class="w-full" style="{{$event->is_free ? 'display: none;' : 'display: block;'}}">
+                            <label class="mb-2.5 block text-black dark:text-white">
+                                Harga <span class="text-meta-1">*</span>
+                            </label>
+                            <input type="number" name="price" value="{{ old('price', $event->price) }}" placeholder="Masukkan harga event"
+                                class="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary" />
+                            @error('price')
+                                <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
                     <button type="submit"
                         class="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
                         Simpan Perubahan
                     </button>
                 </div>
             </form>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const isFreeCheckbox = document.getElementById('is_free_checkbox');
+                    const isFreeHidden = document.getElementById('is_free_hidden');
+                    const priceSection = document.getElementById('price_section');
+
+                    // Set initial state based on event data
+                    const isFreeValue = {{$event->is_free ? 'true' : 'false'}};
+                    if (isFreeValue) {
+                        isFreeCheckbox.checked = true;
+                        isFreeHidden.value = '1';
+                        priceSection.style.display = 'none';
+                    } else {
+                        isFreeCheckbox.checked = false;
+                        isFreeHidden.value = '0';
+                        priceSection.style.display = 'block';
+                    }
+
+                    // Update hidden input and price section visibility when checkbox changes
+                    isFreeCheckbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            isFreeHidden.value = '1';
+                            priceSection.style.display = 'none';
+                        } else {
+                            isFreeHidden.value = '0';
+                            priceSection.style.display = 'block';
+                        }
+                    });
+                });
+            </script>
         </div>
     </div>
 @endsection
