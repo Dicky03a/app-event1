@@ -8,6 +8,42 @@ use Illuminate\Http\Request;
 class EventApprovalController extends Controller
 {
     /**
+     * Display a listing of all events with filter and search.
+     */
+    public function all(Request $request)
+    {
+        $this->authorize('event.approve'); // Use specific permission
+
+        $status = $request->query('status');
+        $search = $request->query('search');
+
+        $query = Event::with(['organization', 'creator'])->latest();
+
+        // Apply status filter
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Apply search filter
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhereHas('organization', function($q) use ($search) {
+                      $q->where('name', 'like', '%' . $search . '%');
+                  })
+                  ->orWhereHas('creator', function($q) use ($search) {
+                      $q->where('name', 'like', '%' . $search . '%');
+                  })
+                  ->orWhere('location', 'like', '%' . $search . '%');
+            });
+        }
+
+        $events = $query->get();
+
+        return view('super.events.all', compact('events', 'status', 'search'));
+    }
+
+    /**
      * Display a listing of pending events.
      */
     public function index()

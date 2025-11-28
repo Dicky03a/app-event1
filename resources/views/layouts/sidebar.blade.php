@@ -83,7 +83,7 @@
           @can('manage_events')
             <!-- Event -->
             <li>
-              <a href="{{ auth()->user()->isSuperAdmin() ? route('super.events.pending') : (auth()->user()->isAdmin() ? route('admin.events.index') : route('user.events.index')) }}"
+              <a href="{{ auth()->user()->isSuperAdmin() ? route('super.events.all') : (auth()->user()->isAdmin() ? route('admin.events.index') : route('user.events.index')) }}"
                 @click="selected = 'Event'" class="menu-item group"
                 :class="selected === 'Event' ? 'menu-item-active' : 'menu-item-inactive'">
                 <svg :class="selected === 'Event' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"

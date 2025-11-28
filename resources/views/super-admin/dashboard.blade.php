@@ -120,7 +120,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('super.events.pending') }}"
+                <a href="{{ route('super.events.all') }}"
                     class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                     <div
                         class="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
@@ -131,7 +131,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-gray-900 dark:text-white">Kelola Event</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">View and approve events</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">View and manage all events</p>
                     </div>
                 </a>
 

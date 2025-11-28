@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', UserController::class);
 
         // Event Approval Routes
+        Route::get('events', [EventApprovalController::class, 'all'])->name('events.all');
         Route::get('events/pending', [EventApprovalController::class, 'index'])->name('events.pending');
         Route::get('events/{event}', [EventApprovalController::class, 'show'])->name('events.show');
         Route::post('events/{event}/approve', [EventApprovalController::class, 'approve'])->name('events.approve');

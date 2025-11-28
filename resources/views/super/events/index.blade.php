@@ -11,6 +11,7 @@
             <nav>
                 <ol class="flex items-center gap-2">
                     <li><a class="font-medium" href="{{ route('dashboard') }}">Dashboard /</a></li>
+                    <li><a class="font-medium" href="{{ route('super.events.all') }}">All Events /</a></li>
                     <li class="font-medium text-primary">Pending Events</li>
                 </ol>
             </nav>
