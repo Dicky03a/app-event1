@@ -80,6 +80,14 @@ class Event extends Model
     }
 
     /**
+     * Get the event registrations for this event.
+     */
+    public function eventRegistrations(): HasMany
+    {
+        return $this->hasMany(\App\Models\EventRegistration::class);
+    }
+
+    /**
      * Scope a query to only include pending events.
      */
     public function scopePending($query)

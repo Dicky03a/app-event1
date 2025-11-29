@@ -84,6 +84,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the event registrations for the user.
+     */
+    public function eventRegistrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
+
+    /**
      * Check if user is super admin.
      */
     public function isSuperAdmin(): bool

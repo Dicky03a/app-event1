@@ -12,6 +12,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'event_id',
+        'registration_id',
         'user_id',
         'amount',
         'payment_status',
@@ -38,5 +39,13 @@ class Transaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the event registration associated with this transaction.
+     */
+    public function eventRegistration(): BelongsTo
+    {
+        return $this->belongsTo(EventRegistration::class, 'registration_id');
     }
 }

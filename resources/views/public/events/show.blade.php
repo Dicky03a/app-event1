@@ -69,10 +69,30 @@
                         </div>
 
                         <div class="mt-6">
-                            <button
-                                class="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
-                                Daftar Sekarang (Segera)
-                            </button>
+                            @auth
+                                @if($event->price == null || $event->price == 0 || $event->is_free)
+                                    <form action="{{ route('events.register', $event->slug) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
+                                            Daftar Gratis
+                                        </button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('events.register', $event->slug) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
+                                            Daftar & Bayar (Rp {{ number_format($event->price, 0, ',', '.') }})
+                                        </button>
+                                    </form>
+                                @endif
+                            @else
+                                <a href="{{ route('login') }}"
+                                    class="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90">
+                                    Login untuk Daftar
+                                </a>
+                            @endauth
                         </div>
                     </div>
                 </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventApprovalController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PublicEventController;
@@ -17,7 +18,9 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes (including Midtrans callback)
-Route::post('/midtrans/callback', [TransactionController::class, 'notificationHandler']);
+Route::post('/midtrans/callback', [TransactionController::class, 'notificationHandler'])
+    ->withoutMiddleware('auth');
+
 
 Route::get('/', [FrontController::class, 'index'])->name('home');
 Route::get('/events', [PublicEventController::class, 'index'])->name('events.index');
@@ -30,6 +33,23 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
+
+// Event Registration routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/events/{slug}/register', [EventRegistrationController::class, 'store'])->name('events.register');
+    Route::get('/events/{slug}/success', [EventRegistrationController::class, 'success'])->name('events.success');
+    Route::get('/events/{slug}/status', [EventRegistrationController::class, 'status'])->name('events.status');
+    Route::get('/registrations/{registration}/checkout', [EventRegistrationController::class, 'checkout'])->name('payment.checkout');
+    Route::post('/registrations/{id}/update-payment', [EventRegistrationController::class, 'updatePaymentStatus'])->name('payment.update-status');
+
+    // Transaction routes
+    Route::get('/transactions/{event}/create', [TransactionController::class, 'create'])->name('transactions.create');
+    Route::post('/transactions/{event}', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+
+    // Admin route for viewing event registrations
+    Route::get('/events/{eventSlug}/registrations', [EventRegistrationController::class, 'index'])->name('admin.event-registrations.index');
+});
 
 // Protected routes - redirect to role-specific dashboard
 Route::middleware(['auth'])->group(function () {
@@ -75,9 +95,5 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('certificates', CertificateController::class)->only(['index', 'show']);
         Route::resource('registrations', RegistrationController::class);
 
-        // Transaction routes for users
-        Route::get('/transactions/{event}/create', [TransactionController::class, 'create'])->name('transactions.create');
-        Route::post('/transactions/{event}', [TransactionController::class, 'store'])->name('transactions.store');
-        Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
     });
 });

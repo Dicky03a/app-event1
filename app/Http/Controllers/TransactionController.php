@@ -3,23 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
 
 class TransactionController extends Controller
 {
+
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except('notificationHandler');
     }
 
     /**
      * Create a new transaction for an event
      */
-    public function create(Event $event)
+    public function create($event)
     {
+        $event = Event::where('id', $event)->published()->firstOrFail();
+
         // Check if the event is paid
         if ($event->is_free) {
             return redirect()->route('events.show', $event)
@@ -32,8 +37,10 @@ class TransactionController extends Controller
     /**
      * Store a new transaction and initiate payment
      */
-    public function store(Request $request, Event $event)
+    public function store(Request $request, $event)
     {
+        $event = Event::where('id', $event)->published()->firstOrFail();
+
         // Validate the event is not free
         if ($event->is_free) {
             return redirect()->route('events.show', $event)
@@ -48,9 +55,20 @@ class TransactionController extends Controller
             ->whereIn('payment_status', ['pending', 'paid'])
             ->first();
 
-        if ($existingTransaction) {
-            if ($existingTransaction->payment_status === 'pending') {
-                return redirect()->route('transactions.show', $existingTransaction)
+        // Also check in event_registrations table for duplicate registrations
+        $existingRegistration = EventRegistration::where('user_id', $user->id)
+            ->where('event_id', $event->id)
+            ->where('payment_status', '!=', 'free')
+            ->first();
+
+        if ($existingTransaction || $existingRegistration) {
+            if (($existingTransaction && $existingTransaction->payment_status === 'pending') ||
+                ($existingRegistration && $existingRegistration->payment_status === 'pending')) {
+                // If we have an existing registration, redirect to its checkout
+                $reg = $existingRegistration ?: EventRegistration::where('user_id', $user->id)
+                    ->where('event_id', $event->id)
+                    ->first();
+                return redirect()->route('payment.checkout', $reg->id)
                     ->with('info', 'Anda sudah memiliki transaksi pending untuk event ini.');
             } else {
                 return redirect()->route('events.show', $event)
@@ -58,9 +76,20 @@ class TransactionController extends Controller
             }
         }
 
+        // Create or find event registration record
+        $eventRegistration = EventRegistration::firstOrCreate([
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+        ], [
+            'payment_status' => 'pending',
+            'payment_reference' => 'REG-' . strtoupper(Str::random(10)),
+            'registered_at' => now(),
+        ]);
+
         // Create transaction record
         $transaction = Transaction::create([
             'event_id' => $event->id,
+            'registration_id' => $eventRegistration->id,
             'user_id' => $user->id,
             'amount' => $event->price,
             'payment_status' => 'pending',
@@ -105,8 +134,12 @@ class TransactionController extends Controller
             // Redirect to payment page
             return redirect($transaction->payment_url);
         } catch (\Exception $e) {
-            // Delete the transaction if payment creation fails
+            // Delete the transaction and registration if payment creation fails
             $transaction->delete();
+            // Only delete the registration if it was newly created and has no payment
+            if ($eventRegistration->wasRecentlyCreated) {
+                $eventRegistration->delete();
+            }
 
             return redirect()->route('events.show', $event)
                 ->with('error', 'Gagal membuat transaksi pembayaran. Silakan coba lagi.');
@@ -116,8 +149,9 @@ class TransactionController extends Controller
     /**
      * Show transaction details
      */
-    public function show(Transaction $transaction)
+    public function show($transaction)
     {
+        $transaction = Transaction::with('event')->findOrFail($transaction);
         $this->authorizeTransactionAccess($transaction);
 
         return view('transactions.show', compact('transaction'));
@@ -142,15 +176,32 @@ class TransactionController extends Controller
         // Update payment status based on notification
         if ($notification->transaction_status == 'capture' || $notification->transaction_status == 'settlement') {
             $transaction->payment_status = 'paid';
-        } elseif ($notification->transaction_status == 'deny' ||
-                  $notification->transaction_status == 'cancel' ||
-                  $notification->transaction_status == 'expire') {
+        } elseif (
+            $notification->transaction_status == 'deny' ||
+            $notification->transaction_status == 'cancel' ||
+            $notification->transaction_status == 'expire'
+        ) {
             $transaction->payment_status = 'failed';
         } elseif ($notification->transaction_status == 'pending') {
             $transaction->payment_status = 'pending';
         }
 
         $transaction->save();
+
+        // Update related event registration
+        if ($transaction->eventRegistration) {
+            $paymentStatus = $transaction->payment_status;
+            if ($paymentStatus === 'paid') {
+                $transaction->eventRegistration->update([
+                    'payment_status' => 'paid',
+                    'ticket_code' => 'TKT-' . strtoupper(Str::random(10)),
+                ]);
+            } else {
+                $transaction->eventRegistration->update([
+                    'payment_status' => $paymentStatus,
+                ]);
+            }
+        }
 
         return response('Notification received', 200);
     }
